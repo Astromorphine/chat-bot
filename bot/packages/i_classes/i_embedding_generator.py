@@ -1,0 +1,6 @@
+from typing import Protocol
+from packages.i_classes.i_logger import ILogger
+
+class IEmbeddingGenerator(Protocol):
+    def __init__(self, logger: ILogger) -> None: ...
+    def create_embedding(self, text: str) -> list[float]: ...
