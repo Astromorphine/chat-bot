@@ -1,6 +1,6 @@
-from typing import Protocol
 import logging
-from packages.i_classes.i_logger import ILogger
+from bot.packages.i_classes.i_logger import ILogger
+import datetime
 
 class StandardLogger(ILogger):
     def __init__(self, name: str = __name__, level: int = logging.INFO, log_to_file: bool = True):
@@ -11,10 +11,11 @@ class StandardLogger(ILogger):
             formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
 
             if log_to_file:
-                file_handler = logging.FileHandler("bot.log", encoding="utf-8")
+                now = datetime.datetime.now().date().isoformat()
+                file_handler = logging.FileHandler(f"logs/bot_{now}.log", encoding="utf-8")
                 file_handler.setFormatter(formatter)
                 self._logger.addHandler(file_handler)
-
+                
             stream_handler = logging.StreamHandler()
             stream_handler.setFormatter(formatter)
             self._logger.addHandler(stream_handler)

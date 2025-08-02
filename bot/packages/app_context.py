@@ -1,14 +1,12 @@
+from bot.packages.my_logger import StandardLogger
+from bot.packages.rag_bot import RAGAgent, RAGBotHandler
 
-from packages.my_logger import StandardLogger
-from packages.rag_bot import RAGAgent, RAGBotHandler
-
-from packages.document_processor import DocumentProccesor
-from packages.embedding_generator import OpenAIEmbeddingGenerator, OpenAITokenizerWrapper
-from packages.my_logger import StandardLogger
-from packages.lance_vector_db import LanceVectorDB
-from common.paths import PDF_DIR, LOG_DIR, PDF_FILES
-from packages.html_processing import HTMLProcessing
-
+from bot.packages.html_processing import HTMLDownloader, HTMLCleaner
+from bot.packages.embedding_generator import OpenAIEmbeddingGenerator
+from bot.packages.my_logger import StandardLogger
+from bot.packages.lance_vector_db import LanceVectorDB
+from bot.packages.text_pocessor import TextProcessor
+from bot.packages.travily_agent import TravilyAgent
 
 class AppContext:
     def __init__(self):
@@ -17,10 +15,11 @@ class AppContext:
         self.bot_handler = RAGBotHandler(
             agent=self.agent,
             logger=self.logger,
-            db_path="./lancedb"
+            db_path="./data/lancedb"
         )
-        self.tokenizer = OpenAITokenizerWrapper()
-        self.doc_proccesor = DocumentProccesor(self.logger, self.tokenizer, 8191)
+        self.travily_agent = TravilyAgent(self.logger)
         self.embedding_generator = OpenAIEmbeddingGenerator(self.logger)
-        self.html_poccessor = HTMLProcessing()
-        self.lance_db = LanceVectorDB(self.logger, self.embedding_generator, "pdf_chunks")
+        self.html_processor = HTMLDownloader(self.logger)
+        self.html_cleaner = HTMLCleaner(self.logger)
+        self.text_processor = TextProcessor(self.logger)
+        self.lance_db = LanceVectorDB(self.logger, self.embedding_generator)

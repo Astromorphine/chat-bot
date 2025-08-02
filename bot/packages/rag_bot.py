@@ -14,9 +14,8 @@ from langgraph.graph import StateGraph, START
 from langgraph.graph.message import add_messages
 from typing import Annotated, Optional, Sequence, TypedDict, List, Dict, Any
 
-import logging
 import os
-from packages.my_logger import ILogger
+from bot.packages.my_logger import ILogger
 
 # Инструменты для ReAct агента
 from langchain_core.tools import Tool
@@ -36,8 +35,8 @@ class SearchAgentState(TypedDict):
 
 class RAGAgent():
 
-    def __init__(self, logger=None):
-        self.logger = logger or logging.getLogger(__name__)
+    def __init__(self, logger : ILogger):
+        self.logger = logger
 
     def create_empty_state(self) -> SearchAgentState:
         """
@@ -50,7 +49,7 @@ class RAGAgent():
             "search_history": []
         }
 
-    def connect_to_lancedb(self, db_path, table_name="pdf_docs"):
+    def connect_to_lancedb(self, db_path, table_name="from_txt"):
         """
         Подключение к существующей базе данных LanceDB.
         
@@ -106,7 +105,7 @@ class RAGAgent():
             self.logger.critical(f"Ошибка при подключении к базе данных: {str(e)}")
             return None
 
-    def raw_search_documents(self, query, vector_store=None, k=3):
+    def raw_search_documents(self, query : str, vector_store : LanceDB, k=3):
         """
         Чистая функция поиска документов без зависимостей от инструментов LangChain.
         Эта функция предотвращает конфликты между объектом vector_store и системой обратных вызовов.
@@ -120,9 +119,7 @@ class RAGAgent():
             str: Отформатированная строка с найденными документами и их метаданными
         """
         try:
-            
-            
-            # Выполнение поиска через LangChain API - семантический поиск по векторам
+                # Выполнение поиска через LangChain API - семантический поиск по векторам
             results = vector_store.similarity_search(query, k=k)
             
             # Форматирование результатов в читаемый вид
@@ -138,7 +135,7 @@ class RAGAgent():
         except Exception as e:
             return f"Ошибка при выполнении поиска: {str(e)}"
 
-    def raw_search_with_filter(self, query, metadata_filter, vector_store=None, k=3):
+    def raw_search_with_filter(self, query, metadata_filter, vector_store : LanceDB, k=3):
         """
         Чистая функция поиска документов с применением фильтра по метаданным.
         Работает напрямую с векторным хранилищем без использования инструментов LangChain.
@@ -298,7 +295,7 @@ class RAGAgent():
             # Проверяем, были ли использованы инструменты
             search_results = []
             search_tool_used = False
-            updated_messages = state["messages"] + [response]
+            updated_messages = state["messages"]  + [response]
             
             # Обработка вызовов инструментов
             if hasattr(response, "tool_calls") and response.tool_calls:
@@ -577,7 +574,7 @@ class RAGBotHandler():
             else:
                 try:
                     # Подключаемся к базе данных
-                    vector_db = self.agent.connect_to_lancedb(db_path=self.db_path, table_name="pdf_docs")
+                    vector_db = self.agent.connect_to_lancedb(db_path=self.db_path, table_name="from_txt")
                     self.logger.info("Успешное подключение к базе данных")
                     return vector_db
                 except Exception as e:
@@ -586,7 +583,7 @@ class RAGBotHandler():
 
         def handle_question(self, question):
             if not self.vector_db:
-                self.logger.error("vector_db не инициализирован")
+                self.logger.critical("vector_db не инициализирован")
                 return "⚠️ База данных недоступна. Попробуйте позже."
             try:
                 state = self.agent.run_search_agent(question, self.vector_db)

@@ -1,7 +1,6 @@
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
-from langchain_core.runnables import Runnable
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain.memory import ConversationBufferMemory
-from langchain.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
 
 class QAgent:
@@ -17,8 +16,7 @@ class QAgent:
         Твои ответы строятся на принципах архитектурной ясности — ты всегда объясняешь компромиссы (trade-offs) каждого варианта, учитывая масштабируемость, удобство поддержки и потенциальный технический долг.
         """)
         
-
-    def ask(self, user_input: str) -> str:
+    def ask(self, user_input: str) -> str | list[str | dict]:
 
         chat_history = self.memory.chat_memory.messages.copy()
 

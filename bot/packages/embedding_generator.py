@@ -1,61 +1,12 @@
-from typing import List, Dict, Any, Optional, Tuple, Protocol
 from dotenv import load_dotenv
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
-from transformers.tokenization_utils_base import PreTrainedTokenizerBase
-from tiktoken import get_encoding
 from openai import OpenAI
 import openai
 import os
+from typing import List
 
-from packages.i_classes.i_embedding_generator import IEmbeddingGenerator
-from packages.i_classes.i_embedding_generator import ILogger
-
-class OpenAITokenizerWrapper(PreTrainedTokenizerBase):
-    """Минимальная обертка для токенизатора OpenAI."""
-
-    def __init__(
-        self, model_name: str = "cl100k_base", max_length: int = 8191, **kwargs
-    ):
-        """Инициализация токенизатора.
-
-        Args:
-            model_name: Название кодировки OpenAI для использования
-            max_length: Максимальная длина последовательности
-        """
-        super().__init__(model_max_length=max_length, **kwargs)
-        self.tokenizer = get_encoding(model_name)
-        self._vocab_size = self.tokenizer.max_token_value
-
-    def __len__(self):
-        return self.vocab_size
-
-    def tokenize(self, text: str, **kwargs) -> List[str]:
-        """Основной метод, используемый HybridChunker."""
-        return [str(t) for t in self.tokenizer.encode(text)]
-
-    def _tokenize(self, text: str) -> List[str]:
-        return self.tokenize(text)
-
-    def _convert_token_to_id(self, token: str) -> int:
-        return int(token)
-
-    def _convert_id_to_token(self, index: int) -> str:
-        return str(index)
-
-    def get_vocab(self) -> Dict[str, int]:
-        return dict(enumerate(range(self.vocab_size)))
-
-    @property
-    def vocab_size(self) -> int:
-        return self._vocab_size
-
-    def save_vocabulary(self, *args) -> Tuple[str]:
-        return ()
-
-    @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        """Классовый метод для соответствия интерфейсу HuggingFace."""
-        return cls()
+from bot.packages.i_classes.i_embedding_generator import IEmbeddingGenerator
+from bot.packages.i_classes.i_embedding_generator import ILogger
 
 class OpenAIEmbeddingGenerator(IEmbeddingGenerator):
     
@@ -102,5 +53,19 @@ class OpenAIEmbeddingGenerator(IEmbeddingGenerator):
             self.logger.critical(f"Произошла ошибка при создании вектора эмбеддинга, Trace:, {e}")
             raise
 
-    
+    def create_embeddings_for_chunks(self, chunks: List[str]) -> List[List[float]]:
+        """
+        Создает эмбеддинги для списка чанков текста.
+        
+        Args:
+            chunks: Список чанков текста.
+
+        Returns:
+            Список эмбеддингов для каждого чанка.
+        """
+        embeddings = []
+        for chunk in chunks:
+            embedding = self.create_embedding(chunk)
+            embeddings.append(embedding)
+        return embeddings
     

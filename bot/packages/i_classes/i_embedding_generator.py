@@ -1,5 +1,5 @@
 from typing import Protocol
-from packages.i_classes.i_logger import ILogger
+from bot.packages.i_classes.i_logger import ILogger
 
 class IEmbeddingGenerator(Protocol):
     def __init__(self, logger: ILogger) -> None: ...

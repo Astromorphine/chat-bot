@@ -1,9 +1,11 @@
 .env
-
-bot.logs
 .vscodelaunch.json
 
-temp_files/
-myenv/
-logs/
 
+temp_files/
+venv/
+logs/
+bank_data_output/
+data/
+
+pytest.ini
