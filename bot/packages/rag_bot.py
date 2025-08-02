@@ -20,6 +20,8 @@ from bot.packages.my_logger import ILogger
 # Инструменты для ReAct агента
 from langchain_core.tools import Tool
 
+import json
+
 class SearchAgentState(TypedDict):
     """
     Состояние поискового агента на основе ReAct.
@@ -353,7 +355,6 @@ class RAGAgent():
                                 if 'metadata_filter' in tool_args:
                                     metadata_filter = tool_args['metadata_filter']
                             elif isinstance(tool_args, str):
-                                import json
                                 try:
                                     args_dict = json.loads(tool_args)
                                     search_query = args_dict.get('query', query)
@@ -585,14 +586,13 @@ class RAGBotHandler():
             if not self.vector_db:
                 self.logger.critical("vector_db не инициализирован")
                 return "⚠️ База данных недоступна. Попробуйте позже."
-            try:
-                state = self.agent.run_search_agent(question, self.vector_db)
-                ai_messages = [msg for msg in state["messages"] if isinstance(msg, AIMessage)]
-                last_message = ai_messages[-1] if ai_messages else None
-                response = last_message.content
-                return response
-            except Exception as e:
-                self.logger.critical(f"Ошибка при работе поискового агента: {str(e)}")
-                return "⚠️ Ошибка при обработке запроса. Попробуйте снова."
-
+            #try:
+            state = self.agent.run_search_agent(question, self.vector_db)
+            ai_messages = [msg for msg in state["messages"] if isinstance(msg, AIMessage)]
+            last_message = ai_messages[-1] if ai_messages else None
+            response = last_message.content
+            return response
+            #except Exception as e:
+            #    self.logger.critical(f"Ошибка при работе поискового агента: {str(e)}")
+            #    return "⚠️ Ошибка при обработке запроса. Попробуйте снова."
 

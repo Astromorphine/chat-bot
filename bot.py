@@ -62,6 +62,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
         thinking_msg = await update.message.reply_text("🤔 Думаю...", reply_markup=get_main_keyboard())
 
+        # TODO бот не помнит истоию, стоит переместить его в app_context, что бы не пересоздавать экземпляр заного, init_agent скорее всего генерирует новый uuid
         agent = QAgent()
         response = agent.ask(text)
 
@@ -72,6 +73,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await update.message.reply_text(response, parse_mode="Markdown", reply_markup=get_main_keyboard())
 
+    # TODO Заменить QA RAG режим на полноценный чат с поддержкой RAG
     elif current_mode == MODE_RAG_QUESTION:
         
         await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)

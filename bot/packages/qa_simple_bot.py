@@ -1,34 +1,48 @@
-from langchain_core.messages import HumanMessage, SystemMessage
-from langchain.memory import ConversationBufferMemory
-from langchain_community.chat_models import ChatOpenAI
-from langchain_core.prompts import PromptTemplate
+import uuid
 
-class QAgent:
+from langchain_core.messages import HumanMessage
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import START, MessagesState, StateGraph
+from langchain_openai import ChatOpenAI
+
+class QAgent():
     def __init__(self, model_name="gpt-4o-mini", temperature=0.2):
-        self.llm = ChatOpenAI(model=model_name, temperature=temperature)
-        self.memory = ConversationBufferMemory(return_messages=True)
-
-        self.system_template = PromptTemplate.from_template("""
-        Ты — профессиональный архитектор программных систем и senior developer с 20-летним опытом.
-        Твой подход к любым вопросам сочетает инженерную строгость, архитектурное видение и здоровый скептицизм.
-        Ты всегда начинаешь с глубокого анализа проблемы, рассматривая её с разных ракурсов: технические ограничения, требования бизнес-логики, долгосрочные последствия для поддержки и развития.
-        Ты мыслишь критически и не стесняешься указывать на подводные камни даже в самых популярных или модных решениях. 
-        Твои ответы строятся на принципах архитектурной ясности — ты всегда объясняешь компромиссы (trade-offs) каждого варианта, учитывая масштабируемость, удобство поддержки и потенциальный технический долг.
-        """)
+        self.model = ChatOpenAI(model=model_name, temperature=temperature)
+        self.workflow = StateGraph(state_schema=MessagesState)
+        self.init_agent()
         
-    def ask(self, user_input: str) -> str | list[str | dict]:
+    def call_model(self, state: MessagesState):
+        response = self.model.invoke(state["messages"])
+        # We return a list, because this will get added to the existing list
+        return {"messages": response}
+    
+    def init_agent(self):
+        # Define the two nodes we will cycle between
+        self.workflow.add_edge(START, "model")
+        self.workflow.add_node("model", self.call_model)
 
-        chat_history = self.memory.chat_memory.messages.copy()
+        # Adding memory is straight forward in langgraph!
+        memory = MemorySaver()
 
-        if not any(isinstance(m, SystemMessage) for m in chat_history):
-            system_msg = SystemMessage(content=self.system_template.format())
-            chat_history.insert(0, system_msg)
+        app = self.workflow.compile(
+            checkpointer=memory
+        )
 
-        chat_history.append(HumanMessage(content=user_input))
+        # The thread id is a unique key that identifies
+        # this particular conversation.
+        # We'll just generate a random uuid here.
+        # This enables a single application to manage conversations among multiple users.
+        thread_id = uuid.uuid4()
+        config = {"configurable": {"thread_id": thread_id}}
 
-        response = self.llm.invoke(chat_history)
+        self.app = app
+        self.config = config
 
-        chat_history.append(response)
-        self.memory.chat_memory.messages = chat_history
+    def ask(self, input_message : str):
 
-        return response.content
+        final_event = None
+        input_message = HumanMessage(content=input_message)
+        for event in self.app.stream({"messages": [input_message]}, self.config, stream_mode="values"):
+            final_event = event
+
+        return final_event["messages"][-1].content
