@@ -38,6 +38,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = update.message.text
+
+    app_context = context.bot_data["app_context"]
     
     if text == "📤 Загрузить файл":
         await set_upload_mode(update, context)
@@ -62,9 +64,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
         thinking_msg = await update.message.reply_text("🤔 Думаю...", reply_markup=get_main_keyboard())
 
-        # TODO бот не помнит истоию, стоит переместить его в app_context, что бы не пересоздавать экземпляр заного, init_agent скорее всего генерирует новый uuid
-        agent = QAgent()
-        response = agent.ask(text)
+        qa_agent = app_context.qa_agent
+
+        # При каждом перезапуске бота генерируется новый uuid. Возможно стоит хранить пользователей и делать для каждого отдельный uuid
+        response = qa_agent.ask(text)
 
         await context.bot.delete_message(
             chat_id=update.effective_chat.id,
@@ -80,7 +83,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         thinking_msg = await update.message.reply_text("🤔 Думаю...", reply_markup=get_main_keyboard())
 
         # Реализация ответа через app_context
-        app_context = context.bot_data["app_context"]
         response = app_context.bot_handler.handle_question(text)
 
         await context.bot.delete_message(
@@ -95,7 +97,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         url = text
         
         if is_url_reachable(url):
-            app_context = context.bot_data["app_context"]
 
             html_processor = app_context.html_processor
             text_processor = app_context.text_processor

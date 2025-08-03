@@ -7,13 +7,15 @@ from bot.packages.my_logger import StandardLogger
 from bot.packages.lance_vector_db import LanceVectorDB
 from bot.packages.text_pocessor import TextProcessor
 from bot.packages.travily_agent import TravilyAgent
+from bot.packages.qa_simple_bot import QAgent
 
 class AppContext:
     def __init__(self):
         self.logger = StandardLogger(name="RAGBot")
-        self.agent = RAGAgent(logger=self.logger)
+        self.qa_agent = QAgent(logger=self.logger)
+        self.rag_agent = RAGAgent(logger=self.logger)
         self.bot_handler = RAGBotHandler(
-            agent=self.agent,
+            agent=self.rag_agent,
             logger=self.logger,
             db_path="./data/lancedb"
         )
