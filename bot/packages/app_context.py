@@ -1,6 +1,5 @@
 from bot.packages.my_logger import StandardLogger
 from bot.packages.rag_bot import RAGAgent, RAGBotHandler
-
 from bot.packages.html_processing import HTMLDownloader, HTMLCleaner
 from bot.packages.embedding_generator import OpenAIEmbeddingGenerator
 from bot.packages.my_logger import StandardLogger
@@ -8,6 +7,9 @@ from bot.packages.lance_vector_db import LanceVectorDB
 from bot.packages.text_pocessor import TextProcessor
 from bot.packages.travily_agent import TravilyAgent
 from bot.packages.qa_simple_bot import QAgent
+from bot.packages.doc_processor import DocumentProcessor
+
+from common.file_utils import FileUtilities
 
 class AppContext:
     def __init__(self):
@@ -25,3 +27,5 @@ class AppContext:
         self.html_cleaner = HTMLCleaner(self.logger)
         self.text_processor = TextProcessor(self.logger)
         self.lance_db = LanceVectorDB(self.logger, self.embedding_generator)
+        self.document_processor = DocumentProcessor(self.logger)
+        self.file_utilities = FileUtilities(self.logger)

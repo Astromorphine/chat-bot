@@ -51,11 +51,11 @@ class QAgent():
             final_event = None
             input_message = HumanMessage(content=input_message)
             for event in self.app.stream({"messages": [input_message]}, self.config, stream_mode="values"):
-                final_event = event
+                final_event = event["messages"][-1]
 
-            if not isinstance(final_event["messages"][-1], AIMessage):
+            if not isinstance(final_event, AIMessage):
                 raise
             
-            return final_event["messages"][-1].content
+            return final_event.content
         except Exception as e:
             self.logger.critical(f"Произошла ошибка при обработке запроса агенту, Trace: {e}")

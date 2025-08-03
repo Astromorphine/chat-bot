@@ -18,3 +18,5 @@ ipywidgets
 spacy
 langdetect
 tavily-python
+pymupdf
+python-docx

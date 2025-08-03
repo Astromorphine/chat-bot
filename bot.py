@@ -102,6 +102,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text_processor = app_context.text_processor
             lance_db = app_context.lance_db
             html_cleaner = app_context.html_cleaner
+            file_utilities = app_context.file_utilities
 
             url_raw_text, status = await html_processor.download(url)
             if url_raw_text is None and isinstance(status, str):
@@ -114,7 +115,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(status, parse_mode="Markdown", reply_markup=get_main_keyboard()) # status
             else:
                 url_clean_text = html_cleaner.clean(url_raw_text)
-                filepath = html_processor.create_txt(text=url_clean_text, url=url)
+                filepath = file_utilities.create_txt(text=url_clean_text, url=url)
                 if filepath is None:
                     await update.message.reply_text("Произошла ошибка при сохранении txt файла", parse_mode="Markdown", reply_markup=get_main_keyboard())
                 else:
@@ -125,7 +126,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         lance_db.connect_db(db_path = "data/lancedb")
                         lance_db.select_table("from_txt")
                         table = lance_db.get_table()
-                        filename = html_processor.decode_filename_base64(str(filepath).replace(f"{TXT_DIR}","").replace(".txt", "").replace("\\",""))
+                        filename = file_utilities.decode_filename_base64(str(filepath).replace(f"{TXT_DIR}","").replace(".txt", "").replace("\\",""))
                         lance_db.fill_table(filename=filename, chunks=chunks, current_table=table)
                         await update.message.reply_text("Данные из ссылки были получены, обработаны и сохранены", parse_mode="Markdown", reply_markup=get_main_keyboard())   
         else:
@@ -150,6 +151,8 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
+    app_context = context.bot_data["app_context"]
+
     file = await update.message.document.get_file()
 
     if file.file_size > 10 * 1024 * 1024:  # 10 МБ
@@ -161,13 +164,33 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     file_path = os.path.join(UPLOAD_FOLDER, update.message.document.file_name)
-    await file.download_to_drive(file_path)
+    file_path = await file.download_to_drive(file_path)
 
-    response = f"{update.message.document.file_name} успешно сохранен"
+    document_processor = app_context.document_processor
+    file_utilities = app_context.file_utilities
+    text_processor = app_context.text_processor
+    lance_db = app_context.lance_db
 
-    await update.message.reply_text(response, reply_markup=get_main_keyboard())
+    text = document_processor.extract_text_from_file(file_path)
+    
+    filename = update.message.document.file_name.split('.')[0]
+    filename = file_utilities.encode_filename_base64(filename)
 
-    # TODO О
+    filepath = file_utilities.create_txt(text, filename)
+
+    if filepath is None:
+        await update.message.reply_text("Произошла ошибка при сохранении txt файла", parse_mode="Markdown", reply_markup=get_main_keyboard())
+    else:
+        chunks = text_processor.chunk_text(filepath=filepath, chunk_size=3000, chunk_overlap=200)
+        if chunks is None:
+            await update.message.reply_text("Ошибка при разбиении текста на чанки", parse_mode="Markdown", reply_markup=get_main_keyboard())
+        else:
+            lance_db.connect_db(db_path = "data/lancedb")
+            lance_db.select_table("from_txt")
+            table = lance_db.get_table()
+            filename = file_utilities.decode_filename_base64(str(filepath).replace(f"{TXT_DIR}","").replace(".txt", "").replace("\\",""))
+            lance_db.fill_table(filename=filename, chunks=chunks, current_table=table)
+            await update.message.reply_text("Данные из файла были получены, обработаны и сохранены", parse_mode="Markdown", reply_markup=get_main_keyboard())   
 
     os.remove(file_path)
 

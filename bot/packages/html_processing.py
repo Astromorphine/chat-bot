@@ -3,11 +3,7 @@ from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 from typing import Optional
 
-from common.paths import TXT_DIR
 from bot.packages.i_classes.i_logger import ILogger
-
-import base64
-from pathlib import Path
 
 class HTMLDownloader():
 
@@ -57,23 +53,6 @@ class HTMLDownloader():
         response = requests.get(url)
         response.raise_for_status()
         return response.text
-
-    def encode_filename_base64(self, url: str) -> str:
-        return base64.urlsafe_b64encode(url.encode('utf-8')).decode('utf-8')
-
-    def decode_filename_base64(self, encoded_url: str) -> str:
-        return base64.urlsafe_b64decode(encoded_url.encode('utf-8')).decode('utf-8')
-
-    def create_txt(self, text : str, url : str) -> Path | None:
-        try:
-            file_path = TXT_DIR / f"{self.encode_filename_base64(url)}.txt"
-            with open(file=file_path,mode="w", encoding="utf-8") as f:
-                data = f.write(text)
-                self.logger.info(f"Файл с названием: {url} и размером в {data} символов был успешно сохранён, путь -> {file_path}")
-            return file_path
-        except Exception as e:
-            self.logger.critical(f"Произошла ошибка при сохранении txt файла, Trace: {e}")
-            return None
 
     def is_content_page(self, html_content) -> bool:
         """

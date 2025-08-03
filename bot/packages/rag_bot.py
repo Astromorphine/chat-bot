@@ -586,13 +586,13 @@ class RAGBotHandler():
             if not self.vector_db:
                 self.logger.critical("vector_db не инициализирован")
                 return "⚠️ База данных недоступна. Попробуйте позже."
-            #try:
-            state = self.agent.run_search_agent(question, self.vector_db)
-            ai_messages = [msg for msg in state["messages"] if isinstance(msg, AIMessage)]
-            last_message = ai_messages[-1] if ai_messages else None
-            response = last_message.content
-            return response
-            #except Exception as e:
-            #    self.logger.critical(f"Ошибка при работе поискового агента: {str(e)}")
-            #    return "⚠️ Ошибка при обработке запроса. Попробуйте снова."
+            try:
+                state = self.agent.run_search_agent(question, self.vector_db)
+                ai_messages = [msg for msg in state["messages"] if isinstance(msg, AIMessage)]
+                last_message = ai_messages[-1] if ai_messages else None
+                response = last_message.content
+                return response
+            except Exception as e:
+                self.logger.critical(f"Ошибка при работе поискового агента: {str(e)}")
+                return "⚠️ Ошибка при обработке запроса. Попробуйте снова."
 
