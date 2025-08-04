@@ -59,6 +59,15 @@ class LanceVectorDB(IVEctorDB):
             self.logger.error(f"❌ Ошибка при подключении к таблице: {e}")
             raise
 
+    def check_and_create_table(self, tablename : str):
+        if not self.table_exists(tablename):
+            self.create_table(tablename)
+
+    def table_exists(self, tablename : str) -> bool:
+        if not tablename in self.connection.table_names():
+            return False
+        return True
+
     def create_table(self, table_name: str):
         """
         Создает таблицу в LanceDB.

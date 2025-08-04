@@ -10,3 +10,6 @@ TXT_DIR = BANK_DATA_OUTPUT / "text"
 LOG_DIR = BASE_DIR / "logs"
 
 PDF_FILES = PDF_DIR.glob("*.pdf")
+
+DATA_DIR = BASE_DIR / "data"
+VECTOR_DB = DATA_DIR / "lancedb"

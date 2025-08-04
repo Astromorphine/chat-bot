@@ -10,7 +10,6 @@ import os
 from dotenv import load_dotenv
 
 from bot.packages.app_context import AppContext
-from bot.packages.qa_simple_bot import QAgent
 
 from common.paths import TXT_DIR
 
@@ -115,7 +114,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(status, parse_mode="Markdown", reply_markup=get_main_keyboard()) # status
             else:
                 url_clean_text = html_cleaner.clean(url_raw_text)
-                filepath = file_utilities.create_txt(text=url_clean_text, url=url)
+                filepath = file_utilities.create_txt(url_clean_text, url)
                 if filepath is None:
                     await update.message.reply_text("Произошла ошибка при сохранении txt файла", parse_mode="Markdown", reply_markup=get_main_keyboard())
                 else:
@@ -124,6 +123,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         await update.message.reply_text("Ошибка при разбиении текста на чанки", parse_mode="Markdown", reply_markup=get_main_keyboard())
                     else:
                         lance_db.connect_db(db_path = "data/lancedb")
+                        lance_db.check_and_create_table("from_txt")
                         lance_db.select_table("from_txt")
                         table = lance_db.get_table()
                         filename = file_utilities.decode_filename_base64(str(filepath).replace(f"{TXT_DIR}","").replace(".txt", "").replace("\\",""))
@@ -186,6 +186,7 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("Ошибка при разбиении текста на чанки", parse_mode="Markdown", reply_markup=get_main_keyboard())
         else:
             lance_db.connect_db(db_path = "data/lancedb")
+            lance_db.check_and_create_table("from_txt")
             lance_db.select_table("from_txt")
             table = lance_db.get_table()
             filename = file_utilities.decode_filename_base64(str(filepath).replace(f"{TXT_DIR}","").replace(".txt", "").replace("\\",""))
@@ -197,7 +198,7 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def set_upload_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["mode"] = MODE_UPLOAD
     await update.message.reply_text(
-        "📤 Режим загрузки. Отправьте PDF/DOCX/TXT файл или нажмите «Задать вопрос».",
+        "📤 Режим загрузки. Отправьте PDF/DOCX/TXT файл.",
         reply_markup=get_main_keyboard()
     )
 
@@ -211,7 +212,7 @@ async def set_link_parse_mode(update: Update, context: ContextTypes.DEFAULT_TYPE
 async def set_question_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["mode"] = MODE_QUESTION
     await update.message.reply_text(
-        "❓ Режим вопросов. Напишите ваш запрос или нажмите «Загрузить файл».",
+        "❓ Режим вопросов. Напишите ваш запрос.",
         reply_markup=get_main_keyboard()
     )
 
@@ -245,6 +246,22 @@ def main():
     TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
     app = Application.builder().token(TELEGRAM_TOKEN).build()
+
+    from common.paths import LOG_DIR, VECTOR_DB, DATA_DIR, BANK_DATA_OUTPUT, TXT_DIR
+    from pathlib import Path
+
+    if not Path.exists(LOG_DIR):
+        Path.mkdir(LOG_DIR)
+
+    if not Path.exists(DATA_DIR):
+        Path.mkdir(DATA_DIR)    
+        if not Path.exists(VECTOR_DB):
+            Path.mkdir(VECTOR_DB)
+
+    if not Path.exists(BANK_DATA_OUTPUT):
+        Path.mkdir(BANK_DATA_OUTPUT)    
+        if not Path.exists(TXT_DIR):
+            Path.mkdir(TXT_DIR)
 
     app_context = AppContext()
     app.bot_data["app_context"] = app_context
