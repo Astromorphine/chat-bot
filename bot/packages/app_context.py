@@ -14,6 +14,8 @@ from common.file_utils import FileUtilities
 class AppContext:
     def __init__(self):
         self.logger = StandardLogger(name="RAGBot")
+        self.embedding_generator = OpenAIEmbeddingGenerator(self.logger)
+        self.lance_db = LanceVectorDB(self.logger, self.embedding_generator)
         self.qa_agent = QAgent(logger=self.logger)
         self.rag_agent = RAGAgent(logger=self.logger)
         self.bot_handler = RAGBotHandler(
@@ -22,10 +24,8 @@ class AppContext:
             db_path="./data/lancedb"
         )
         self.travily_agent = TravilyAgent(self.logger)
-        self.embedding_generator = OpenAIEmbeddingGenerator(self.logger)
         self.html_processor = HTMLDownloader(self.logger)
         self.html_cleaner = HTMLCleaner(self.logger)
         self.text_processor = TextProcessor(self.logger)
-        self.lance_db = LanceVectorDB(self.logger, self.embedding_generator)
         self.document_processor = DocumentProcessor(self.logger)
         self.file_utilities = FileUtilities(self.logger)
