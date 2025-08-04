@@ -21,6 +21,7 @@ from bot.packages.my_logger import ILogger
 from langchain_core.tools import Tool
 
 import json
+import pyarrow as pa
 
 class SearchAgentState(TypedDict):
     """
@@ -76,12 +77,23 @@ class RAGAgent():
             
             if not table_names:
                 self.logger.error(f"База данных не содержит таблиц. Путь: {db_path}")
-                return None
             
             if table_name not in table_names:
                 self.logger.warning(f"Таблица {table_name} не найдена. Доступные таблицы: {table_names}")
-                return None
-            
+
+                try:
+                    schema = pa.schema([
+                        pa.field("text", pa.string()),
+                        pa.field("vector", pa.list_(pa.float32(), 1536)),
+                        pa.field("doc_name", pa.string()),
+                        pa.field("chunk_id", pa.string())
+                    ])
+                    db.create_table(table_name, schema=schema)
+                    self.logger.info(f"Создана новая таблица: {table_name}")
+                except Exception as e:
+                    self.logger.error(f"Ошибка при создании таблицы {table_name}: {e}")
+                    raise
+
             # Открываем таблицу
             table = db.open_table(table_name)
             
