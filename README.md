@@ -4,7 +4,7 @@
 [![LangChain](https://img.shields.io/badge/LangChain-0.3%2B-purple?logo=langchain)](https://langchain.com)
 [![LanceDB](https://img.shields.io/badge/LanceDB-VectorDB-green?logo=database)](https://lancedb.com)
 
-Интеллектуальный Telegram-бот с поддержкой Retrieval-Augmented Generation (RAG). Позволяет задавать вопросы, искать информацию в локальной базе знаний, загружать документы, парсить веб-страницы и выполнять поиск в интернете через Tavily API.
+Telegram-бот с поддержкой Retrieval-Augmented Generation (RAG). Позволяет задавать вопросы, искать информацию в локальной базе знаний, загружать документы, парсить веб-страницы и выполнять поиск в интернете через Tavily API.
 
 ## Функционал
 
@@ -35,26 +35,6 @@
 - Архитектура с интерфейсами (`Protocol`)
 - Dependency Injection через `AppContext`
 - Поддержка многопользовательских диалогов (`MemorySaver`)
-
-## Структура проекта
-chat-bot-main/
-├── bot.py # Точка входа Telegram-бота
-├── requirements.txt # Зависимости
-├── .env.example # Шаблон переменных окружения
-├── bot/
-│ ├── packages/ # Бизнес-логика
-│ │ ├── app_context.py # Центральный контекст (DI)
-│ │ ├── rag_bot.py # ReAct-агент для RAG
-│ │ ├── qa_simple_bot.py# Простой QA-агент
-│ │ ├── lance_vector_db.py # Работа с векторной БД
-│ │ ├── doc_processor.py # Извлечение текста из документов
-│ │ ├── html_processing.py # Парсинг и очистка HTML
-│ │ └── ... # Остальные компоненты
-│ └── packages/i_classes/ # Интерфейсы (протоколы)
-├── common/
-│ ├── paths.py # Конфигурация путей
-│ └── file_utils.py # Утилиты (Base64, работа с файлами)
-└── tests/ # Юнит-тесты (pytest)
 
 ## Установка и настройка
 
